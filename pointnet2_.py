@@ -1,4 +1,5 @@
 import os.path as osp
+import os
 import argparse
 import torch
 import torch.nn.functional as F
@@ -6,9 +7,11 @@ from torch.nn import Sequential as Seq, Linear as Lin, ReLU, BatchNorm1d as BN
 # from torch_geometric.datasets import ModelNet
 import torch_geometric.transforms as T
 # from torch_geometric.data import DataLoader
-from torch_geometric.nn import PointConv, fps, radius, global_max_pool
+from torch_geometric.nn import fps, radius, global_max_pool
+from torch_geometric.nn.conv import PointConv
 from show_data import MYData_Lettuce
 from train_eval import run
+from depth2Cloud import generate_ply_file
 # from train_eval_origine import run
 
 parser = argparse.ArgumentParser()
@@ -145,14 +148,21 @@ class Net_LSTM(torch.nn.Module):
 
 
 if __name__ == '__main__':
-    data_path = '/home/ljs/PycharmProjects/data'
+    # 获取当前文件所在的目录
+    DRN_path = os.path.dirname(os.path.abspath(__file__))
+    root_directory = os.path.dirname(DRN_path)
+    image_path = f'{root_directory}/OnlineChallenge'
+    # 该函数只在第一次调用时打开，用于生成ply文件，生成后可注释掉
+    # generate_ply_file(DRN_path)
+    # data_path = '/home/ljs/PycharmProjects/data'
     # data_name = ['FirstTrainingData']
     data_name = ['ori_data']
     # train_path = os.path.join(data_path,  train_data)
     # test_path = os.path.join(data_path, test_data)
-    train_dataset = MYData_Lettuce(data_path=data_path, data_name=data_name, data_class='train', points_num=1024)
+    train_dataset = MYData_Lettuce(data_path=root_directory, data_name=data_name, data_class='train', points_num=1024)
     # print('train_dataset num:', train_dataset.__len__())
-    test_dataset = MYData_Lettuce(data_path=data_path, data_name=data_name, data_class='test', points_num=1024)
+    # train和test还没搞明白啥意思，目前他俩的数据是一样的
+    test_dataset = MYData_Lettuce(data_path=root_directory, data_name=data_name, data_class='test', points_num=1024)
     # NUM_CLASS = 6
     out_features = 1
 
@@ -160,7 +170,7 @@ if __name__ == '__main__':
     # model = Net(out_features)
     model = Net_LSTM(out_features)
 
-    run(train_dataset, test_dataset, model, args.epochs, args.batch_size, args.lr,
+    run(root_directory, train_dataset, test_dataset, model, args.epochs, args.batch_size, args.lr,
         args.lr_decay_factor, args.lr_decay_step_size, args.weight_decay)
 
 

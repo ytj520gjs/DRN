@@ -68,7 +68,7 @@ class MYData(Dataset):
 class MYData_Lettuce(Dataset):
     def __init__(self, data_path=None, data_name=None, data_class='train', points_num=4096):
         self.data_path = data_path
-        self.data = list()
+        self.data = []
         self.label = list()
         if len(data_name) > 1:
             self.data_path = os.path.join(data_path, data_name[0])
@@ -83,21 +83,21 @@ class MYData_Lettuce(Dataset):
                     self.data = np.concatenate((self.data, f['data'][:]), axis=0)
                     self.label = np.concatenate((self.label, f['label'][:]), axis=0)
         else:
-            self.data_path = os.path.join(data_path, data_name[0], 'out_%s/%s' % (points_num, data_class))
+            self.data_path = os.path.join(data_path,  'OnlineChallenge/plyfiles')
             print('self.data_path:', self.data_path)
-            self.label_path = os.path.join(data_path, data_name[0], 'label/GroundTruth.json')
+            self.label_path = os.path.join(data_path, 'OnlineChallenge/GroundTruth/GroundTruth_All_388_Images.json')
             contxt = self.read_Label(self.label_path)
 
             # print(contxt)
             # print(self.data_path)
             # print(self.label_path)
-            pcd_files = sorted(glob_image_dir(self.data_path, cap='*.pcd'),  key=lambda x: int(x.split('/')[-1].split('.')[0]))
-            # print(pcd_files)
+            ply_files = sorted(glob_image_dir(self.data_path, cap='*.ply'))
+            print(ply_files)
             # print('loaddataer:', glob_image_dir(self.data_path, cap='*.pcd'))
             # for pcd_file in glob_image_dir(self.data_path, cap='*.pcd'):
-            for pcd_file in pcd_files:
+            for ply_file in ply_files:
                 # print('pcd_file:', pcd_file)
-                image_index = pcd_file.split('/')[-1].split('.')[0]
+                image_index = ply_file.split('/')[-1].split('.')[0].split('_')[-1]
                 # print('image_index:', image_index)
                 if int(image_index) > 0:
                     per_label = self.get_per_label(contxt, image_index)
@@ -105,7 +105,7 @@ class MYData_Lettuce(Dataset):
                     # print('per_label:', per_label)
                     # print('index:', pcd_file.split('/')[-1].split('.')[0])
                     # print(self.read_PCD_PointClouds(pcd_file))
-                        self.data.append(self.read_PCD_PointClouds(pcd_file))
+                        self.data.append(self.read_PCD_PointClouds(ply_file))
                         self.label.append(per_label)
 
                     # print('%sper_label:'%image_index, per_label )
@@ -119,10 +119,16 @@ class MYData_Lettuce(Dataset):
         # file_path = '/home/ljs/workspace/eccv/FirstTrainingData/out_4096/train/38.pcd'
         pcd = o3d.io.read_point_cloud(file_path)
         point_cloud = np.asarray(pcd.points)
+        # 此处选取读到的二维数组前180000个元素，保证长度一致，否则该文件113行会报错
+        point_cloud = point_cloud[:1800000]
+        print(point_cloud[0])
+        print(point_cloud[1])
+        print(point_cloud[10000])
+        print(point_cloud[801821])
         # color_cloud = np.asarray(pcd.colors)*255
-        color_cloud = np.asarray(pcd.colors)
-        points = np.concatenate([point_cloud, color_cloud], axis=1)
-        # print(points.shape)
+        # color_cloud = np.asarray(pcd.colors)
+        # points = np.concatenate([point_cloud, color_cloud], axis=1)
+        # print(point_cloud.shape)
         # return points
         return point_cloud
 

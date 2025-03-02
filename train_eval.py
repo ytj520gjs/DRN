@@ -37,12 +37,12 @@ def save_net(fname, net):
         net.cuda()
 
     # .module.state_dict()
-def run(train_dataset, test_dataset, model, epochs, batch_size, lr,
+def run(root_directory, train_dataset, test_dataset, model, epochs, batch_size, lr,
         lr_decay_factor, lr_decay_step_size, weight_decay):
     criterion = nn.MSELoss()
     model = model.to(device)
     optimizer = Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-    csv_filePath = os.path.join('result',
+    csv_filePath = os.path.join(root_directory, 'result',
                                 '%s_test_accuracy_' % (2) + time.strftime("%d-%m-%Y-%H-%M-%S") + '.csv')
     writer_ljs, f = csv_writer(csv_filePath)
     # writer, f = csv_writer(csv_filePath)
