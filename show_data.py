@@ -18,8 +18,8 @@ import cv2
 import os
 import torch
 import datetime
-from logger import Logger
-from utils_cau import *
+from DRN.logger import Logger
+from DRN.utils_cau import *
 import open3d as o3d
 
 
@@ -42,8 +42,8 @@ class MYData(Dataset):
         if len(data_name) > 1:
             self.data_path = os.path.join(data_path, data_name[0])
             with h5py.File(self.data_path) as f:
-                self.data = f['data'][:]
-                self.label = f['label'][:]
+                self.data = f['data'][:1000]
+                self.label = f['label'][:1000]
                 # print(type(self.data))
                 # print(type(self.label))
             for i in range(1, len(data_name)):
@@ -75,12 +75,12 @@ class MYData_Lettuce(Dataset):
             with h5py.File(self.data_path) as f:
                 self.data = f['data'][:]
                 self.label = f['label'][:]
-                # print(type(self.data))
-                # print(type(self.label))
+                print(type(self.data))
+                print(type(self.label))
             for i in range(1, len(data_name)):
                 self.data_path = os.path.join(data_path, data_name[i])
                 with h5py.File(self.data_path) as f:
-                    self.data = np.concatenate((self.data, f['data'][:]), axis=0)
+                    self.data = np.concatenate((self.data, f['data'][:]), axis=0)#在实际数据集中，点云数据通常很大，为了避免单个 .h5 文件过大，通常拆分成多个 .h5 文件。
                     self.label = np.concatenate((self.label, f['label'][:]), axis=0)
         else:
             self.data_path = os.path.join(data_path,  'OnlineChallenge/plyfiles')
@@ -97,9 +97,9 @@ class MYData_Lettuce(Dataset):
             # for pcd_file in glob_image_dir(self.data_path, cap='*.pcd'):
             for ply_file in ply_files:
                 # print('pcd_file:', pcd_file)
-                image_index = ply_file.split('/')[-1].split('.')[0].split('_')[-1]
+                image_index = ply_file.split('/')[-1].split('.')[0].split('_')[-1]#取图片编号
                 # print('image_index:', image_index)
-                if int(image_index) > 0:
+                if int(image_index) > 0 and int(image_index) <= 8:
                     per_label = self.get_per_label(contxt, image_index)
                     if per_label:
                     # print('per_label:', per_label)
@@ -120,11 +120,15 @@ class MYData_Lettuce(Dataset):
         pcd = o3d.io.read_point_cloud(file_path)
         point_cloud = np.asarray(pcd.points)
         # 此处选取读到的二维数组前180000个元素，保证长度一致，否则该文件113行会报错
-        point_cloud = point_cloud[:1800000]
+        # 使用 np.linspace 生成索引
+        indices = np.linspace(0, len(point_cloud) - 1, 1024, dtype=int)
+        # 提取点云数据
+        point_cloud = point_cloud[indices]
+        #point_cloud = point_cloud[:2048]
         print(point_cloud[0])
         print(point_cloud[1])
-        print(point_cloud[10000])
-        print(point_cloud[801821])
+        # print(point_cloud[10000])
+        # print(point_cloud[801821])
         # color_cloud = np.asarray(pcd.colors)*255
         # color_cloud = np.asarray(pcd.colors)
         # points = np.concatenate([point_cloud, color_cloud], axis=1)
@@ -232,7 +236,7 @@ def write_log(contxt):
 
 
 if __name__ == '__main__':
-    data_path = '/home/ljs/workspace/eccv'
+    data_path = 'F:/paper/read-papers/datasets/DRN-modify/'
     data_name = ['FirstTrainingData']
     data = MYData_Lettuce(data_path, data_name)
     # print(os.path.join(data_path, data_name[0], 'out_4096/train'))
