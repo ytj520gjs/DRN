@@ -4,8 +4,8 @@ import torch.nn.functional as F
 from torch.nn import Linear as Lin
 from torch_geometric.nn import XConv, fps, global_mean_pool
 from datasets import get_dataset
-from train_eval import run
-from show_data import MYData_Lettuce
+from DRN.train_eval import run
+from DRN.show_data import MYData_Lettuce
 import os
 parser = argparse.ArgumentParser()
 parser.add_argument('--epochs', type=int, default=2000)

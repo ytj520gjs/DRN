@@ -4,8 +4,8 @@ import torch.nn.functional as F
 from torch.nn import Linear as Lin
 from torch_geometric.nn import XConv, fps, global_mean_pool
 from datasets import get_dataset
-from train_eval import run
-from show_data import MYData_Lettuce
+from DRN.train_eval import run
+from DRN.show_data import MYData_Lettuce
 import os
 parser = argparse.ArgumentParser()
 parser.add_argument('--epochs', type=int, default=500)
@@ -97,7 +97,7 @@ class Net_LSTM(torch.nn.Module):
 
     def forward(self, pos, batch):
         # batch_size = batch.reshape(-1, 1024).shape[0]
-        batch_size = batch.reshape(-1, 1024).shape[0]
+        batch_size = batch.reshape(-1, 4096).shape[0]
         # print('pos.shape:', pos.shape, 'batch.shape:', batch.shape)
         # print('batch:', batch)
         # pos = pos[:, :3]

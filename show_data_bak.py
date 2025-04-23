@@ -18,8 +18,8 @@ import cv2
 import os
 import torch
 import datetime
-from logger import Logger
-from utils_cau import *
+from DRN.logger import Logger
+from DRN.utils_cau import *
 import open3d as o3d
 
 
@@ -127,7 +127,7 @@ class MYData_Lettuce(Dataset):
     def read_Label(self, path):
         # path = '/home/ljs/workspace/eccv/FirstTrainingData/label/GroundTruth.json'
         contxt = json_load(path)
-        contxt = contxt['Measurements']
+        contxt = contxt['Measurements']#变量 contxt 是一个字典，这里通过键 'Measurements' 提取出对应的值，然后将这个值重新赋值给变量 contxt。
         return contxt
 
     def get_per_label(self, contxt, index):

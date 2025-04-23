@@ -17,8 +17,8 @@ from DRN.depth2Cloud import generate_ply_file
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--epochs', type=int, default=500)
-parser.add_argument('--batch_size', type=int, default=8)  # default: 32
+parser.add_argument('--epochs', type=int, default=100)
+parser.add_argument('--batch_size', type=int, default=10)  # default: 32
 parser.add_argument('--lr', type=float, default=0.001)  # defualt:0.001
 parser.add_argument('--lr_decay_factor', type=float, default=0.5) # try 0.3
 parser.add_argument('--lr_decay_step_size', type=int, default=50)
@@ -74,7 +74,7 @@ class Net(torch.nn.Module):
         # self.lin2 = Lin(512, 256)
         self.lin2 = Lin(512, out_features)#out_features模型输出
         # self.lin3 = Lin(256, out_features)
-
+        print('out_feature:',out_features)
 
     def forward(self, pos, batch):
 
@@ -126,6 +126,7 @@ class Net_LSTM(torch.nn.Module):
     def forward(self, pos, batch):
 
         batch_size = batch.reshape(-1, 1024).shape[0]
+        # 这里的1024是一个限定值（影响实验过程）
         #对输入的 batch 进行重塑（reshape）并计算新的形状的第一个维度的大小。这行代码的目的是计算批次大小 (batch size)。
         print(f'----batch_size = {batch_size}')
         # sa0_out = (data.x, data.pos, data.batch)
@@ -135,7 +136,7 @@ class Net_LSTM(torch.nn.Module):
         sa3_out = self.sa3_module(*sa2_out)
         x, pos, batch = sa3_out # x: (batch, 1024)
 
-        x = x.reshape(batch_size, 1024, -1)
+        x = x.reshape(batch_size, 1024, -1)#同上方1024一致
         print(f'--------------{x.shape}')
         #重新调整 x 的形状，使其成为 LSTM 输入的格式，其中：batch_size：批量大小 .1024：时间步（这里每个点相当于 LSTM 的时间步）.-1：自动计算通道数（特征维度）
         x, hc = self.rnn(x)
@@ -150,6 +151,8 @@ class Net_LSTM(torch.nn.Module):
         # x = F.dropout(x, p=0.5, training=self.training)
         # x = sel/home/ljs/PycharmProjects/dataf.lin3(x)
         # return F.log_softmax(x, dim=-1)#计算交叉熵损失
+        # print(f'****,{out_features}')
+        print('模型预测结果：', x)
         return x
 
 
@@ -165,10 +168,23 @@ if __name__ == '__main__':
     data_name = ['ori_data']
     # train_path = os.path.join(data_path,  train_data)
     # test_path = os.path.join(data_path, test_data)
-    train_dataset = MYData_Lettuce(data_path=root_directory, data_name=data_name, data_class='train', points_num=1024)
+    full_dataset = MYData_Lettuce(data_path=root_directory, data_name=data_name, points_num=1024)
+
+    # 数据划分：70% train，15% val，15% test
+    total_len = len(full_dataset)
+    train_len = int(total_len * 0.7)
+    val_len = int(total_len * 0.15)
+    test_len = total_len - train_len - val_len
+
+    train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(
+        full_dataset, [train_len, val_len, test_len],
+        generator=torch.Generator().manual_seed(42)  # 固定随机种子确保可复现
+    )
+    # train_dataset = MYData_Lettuce(data_path=root_directory, data_name=data_name, data_class='train', points_num=1024)
+
     # print('train_dataset num:', train_dataset.__len__())
-    # train和test还没搞明白啥意思，目前他俩的数据是一样的
-    test_dataset = MYData_Lettuce(data_path=root_directory, data_name=data_name, data_class='test', points_num=1024)
+    # test_dataset = MYData_Lettuce(data_path=root_directory, data_name=data_name, data_class='test', points_num=1024)
+
     # NUM_CLASS = 6
     out_features = 1
     # print(train_dataset.data[0])
@@ -179,7 +195,7 @@ if __name__ == '__main__':
     # print("batch shape:", batch.shape)
 
     print('============================================')
-    run(root_directory, train_dataset, test_dataset, model, args.epochs, args.batch_size, args.lr,
+    run(root_directory, train_dataset,val_dataset,test_dataset, model, args.epochs, args.batch_size, args.lr,
         args.lr_decay_factor, args.lr_decay_step_size, args.weight_decay)
 
 

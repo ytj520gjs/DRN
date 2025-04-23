@@ -33,7 +33,7 @@ def save_net(fname, net):
 
 def run(train_dataset, test_dataset, model, epochs, batch_size, lr,
         lr_decay_factor, lr_decay_step_size, weight_decay):
-    writer = SummaryWriter(comment=f'LR_{lr}_BS_{batch_size}')
+    writer = SummaryWriter(comment=f'LR_{lr}_BS_{batch_size}')#什么意思
     model = model.to(device)
     optimizer = Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     train_loader = DataLoader(train_dataset, batch_size, shuffle=True)

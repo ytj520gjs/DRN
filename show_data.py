@@ -83,7 +83,9 @@ class MYData_Lettuce(Dataset):
                     self.data = np.concatenate((self.data, f['data'][:]), axis=0)#在实际数据集中，点云数据通常很大，为了避免单个 .h5 文件过大，通常拆分成多个 .h5 文件。
                     self.label = np.concatenate((self.label, f['label'][:]), axis=0)
         else:
-            self.data_path = os.path.join(data_path,  'OnlineChallenge/plyfiles')
+            # self.data_path = os.path.join(data_path, 'OnlineChallenge/hand-modify')
+            self.data_path = os.path.join(data_path,  'OnlineChallenge/plyfiles_world')
+            # self.data_path = os.path.join(data_path, 'OnlineChallenge/plyfiles')
             print('self.data_path:', self.data_path)
             self.label_path = os.path.join(data_path, 'OnlineChallenge/GroundTruth/GroundTruth_All_388_Images.json')
             contxt = self.read_Label(self.label_path)
@@ -99,7 +101,7 @@ class MYData_Lettuce(Dataset):
                 # print('pcd_file:', pcd_file)
                 image_index = ply_file.split('/')[-1].split('.')[0].split('_')[-1]#取图片编号
                 # print('image_index:', image_index)
-                if int(image_index) > 0 and int(image_index) <= 8:
+                if int(image_index) > 0 and int(image_index) <= 50:
                     per_label = self.get_per_label(contxt, image_index)
                     if per_label:
                     # print('per_label:', per_label)
@@ -109,24 +111,33 @@ class MYData_Lettuce(Dataset):
                         self.label.append(per_label)
 
                     # print('%sper_label:'%image_index, per_label )
-            # print(self.data)
+            print(self.data)
             self.data = np.asarray(self.data)
             self.label = np.asarray(self.label)
             print('data_shape:', np.asarray(self.data).shape)
             print('label_shape:', np.asarray(self.label).shape)
 
     def read_PCD_PointClouds(self, file_path):
+        # print(f'--------{file_path}')
         # file_path = '/home/ljs/workspace/eccv/FirstTrainingData/out_4096/train/38.pcd'
+        # file_path = 'F:/paper/read-papers/datasets/DRN-modify/OnlineChallenge/plyfiles_world/ply_1.ply'
         pcd = o3d.io.read_point_cloud(file_path)
         point_cloud = np.asarray(pcd.points)
         # 此处选取读到的二维数组前180000个元素，保证长度一致，否则该文件113行会报错
         # 使用 np.linspace 生成索引
-        indices = np.linspace(0, len(point_cloud) - 1, 1024, dtype=int)
+        # print(len(point_cloud))
+
+        indices = np.linspace(0, len(point_cloud) - 1, 1024, dtype=int)#均匀抽样:生成 1024 个等间隔的索引值
+
+
         # 提取点云数据
+        # print('indices:--',indices)
         point_cloud = point_cloud[indices]
+        # point_cloud = point_cloud[:90000]
+
         #point_cloud = point_cloud[:2048]
-        print(point_cloud[0])
-        print(point_cloud[1])
+        # print(point_cloud[0])
+        # print(point_cloud[1])
         # print(point_cloud[10000])
         # print(point_cloud[801821])
         # color_cloud = np.asarray(pcd.colors)*255
@@ -167,55 +178,55 @@ class MYData_Lettuce(Dataset):
         return np.asarray(self.data[item]), np.asarray(self.label[item])
 
 
-def read_h5file_keys(h5_filename):
-    """
-    读取H5文件里的键值
-    :param h5_filename:
-    :return:
-    """
-    with h5py.File(h5_filename) as f:
-        return [item for item in f.keys()]
+# def read_h5file_keys(h5_filename):
+#     """
+#     读取H5文件里的键值
+#     :param h5_filename:
+#     :return:
+#     """
+#     with h5py.File(h5_filename) as f:
+#         return [item for item in f.keys()]
 
 
-def main():
-    keys = read_h5file_keys(H5_FILE)
-    print("key is : %s" % keys)    # ['data', 'faceId', 'label', 'normal ']
+# def main():
+#     keys = read_h5file_keys(H5_FILE)
+#     print("key is : %s" % keys)    # ['data', 'faceId', 'label', 'normal ']
+#
+#     with h5py.File(H5_FILE) as f:
+#         data = f['data'][:]    # 读取主键'data'的值
+#         label = f['label'][:]   # 读取主键'label'的值
+#
+#
+#     index = 18
+#     print('data[index].shape:', data[index].shape)
+#
+#     file_name = 'pointcloud_index%s_%s.pcd' % (index, label[index])
+#     file_save_path = os.path.join(data_path, 'pointcloud', file_name)
+#     print('file_save_path:', file_save_path)
+#     # pcd = o3d.geometry.PointCloud()
+#     # pcd.points = o3d.utility.Vector3dVector(data[index])
+#     # # o3d.io.write_point_cloud(os.path.join(file_name + ".pcd"), pcd)
+#     # o3d.io.write_point_cloud(file_save_path, pcd)
+#
+#     print(data.shape)    # 2048组，每组1024个点，点为三维数据(x,y,z)
+#     print(data)
+#     # print(data)
+#     print(label.shape)
+#     # print(sorted(label))
+#     print(np.unique(label))
 
-    with h5py.File(H5_FILE) as f:
-        data = f['data'][:]    # 读取主键'data'的值
-        label = f['label'][:]   # 读取主键'label'的值
 
-
-    index = 18
-    print('data[index].shape:', data[index].shape)
-
-    file_name = 'pointcloud_index%s_%s.pcd' % (index, label[index])
-    file_save_path = os.path.join(data_path, 'pointcloud', file_name)
-    print('file_save_path:', file_save_path)
-    # pcd = o3d.geometry.PointCloud()
-    # pcd.points = o3d.utility.Vector3dVector(data[index])
-    # # o3d.io.write_point_cloud(os.path.join(file_name + ".pcd"), pcd)
-    # o3d.io.write_point_cloud(file_save_path, pcd)
-
-    print(data.shape)    # 2048组，每组1024个点，点为三维数据(x,y,z)
-    print(data)
-    # print(data)
-    print(label.shape)
-    # print(sorted(label))
-    print(np.unique(label))
-
-
-def _test():
-    data_path = '/home/ljs/datasets/pointcloud_classifier/small_dataset'
-    train_data = 'train1.h5'
-    test_data = 'test0.h5'
-    train_path = os.path.join(data_path, train_data)
-    test_path = os.path.join(data_path, test_data)
-    train_data = MYData(data_path=train_path)
-    test_data = MYData(data_path=test_path)
-    # print(a.__len__())
-    print('train_data_num:', len(train_data))
-    print('test_data_num:', len(test_data))
+# def _test():
+#     data_path = '/home/ljs/datasets/pointcloud_classifier/small_dataset'
+#     train_data = 'train1.h5'
+#     test_data = 'test0.h5'
+#     train_path = os.path.join(data_path, train_data)
+#     test_path = os.path.join(data_path, test_data)
+#     train_data = MYData(data_path=train_path)
+#     test_data = MYData(data_path=test_path)
+#     # print(a.__len__())
+#     print('train_data_num:', len(train_data))
+#     print('test_data_num:', len(test_data))
 
 
 def _test_tensor():
@@ -236,7 +247,7 @@ def write_log(contxt):
 
 
 if __name__ == '__main__':
-    data_path = 'F:/paper/read-papers/datasets/DRN-modify/'
+    data_path = 'F:/paper/read-papers/datasets/DRN-modify2/'
     data_name = ['FirstTrainingData']
     data = MYData_Lettuce(data_path, data_name)
     # print(os.path.join(data_path, data_name[0], 'out_4096/train'))
